@@ -5,6 +5,7 @@ from statsmodels.formula.api import ols
 from scipy.stats import chi2_contingency
 import matplotlib.pyplot as plt
 import seaborn as sns
+from io import BytesIO
 
 # Title and Description
 st.title("Enhanced Statistical Analysis Tool")
@@ -135,41 +136,31 @@ if uploaded_file:
 
                     st.pyplot(fig)
 
+                    # **Download Options**
+                    st.markdown("### Download Results")
+
+                    # Download ANOVA Table
+                    anova_csv = anova_table.to_csv()
+                    st.download_button(
+                        label="Download ANOVA Table (CSV)",
+                        data=anova_csv,
+                        file_name="anova_results.csv",
+                        mime="text/csv",
+                    )
+
+                    # Download Updated DataFrame
+                    output = BytesIO()
+                    df.to_excel(output, index=False, engine='openpyxl')
+                    output.seek(0)
+                    st.download_button(
+                        label="Download Updated Data (Excel)",
+                        data=output.getvalue(),
+                        file_name="updated_data.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
                 except Exception as e:
                     st.error(f"Error during ANOVA: {e}")
-
-        elif analysis_type == "Chi-Square Test":
-            st.markdown("### Chi-Square Test")
-
-            row_variable = st.selectbox("Select Row Variable", options=df.columns)
-            col_variable = st.selectbox("Select Column Variable", options=[col for col in df.columns if col != row_variable])
-
-            if st.button("Run Chi-Square Test"):
-                try:
-                    # Create contingency table
-                    contingency_table = pd.crosstab(df[row_variable], df[col_variable])
-                    st.write("**Contingency Table**")
-                    st.write(contingency_table)
-
-                    # Perform Chi-Square Test
-                    chi2, p, dof, expected = chi2_contingency(contingency_table)
-
-                    st.markdown("### Chi-Square Test Results")
-                    st.write(f"**Chi-Square Statistic**: {chi2:.2f}")
-                    st.write(f"**Degrees of Freedom**: {dof}")
-                    st.write(f"**p-value**: {p:.4f}")
-
-                    # Bar Chart
-                    st.markdown("### Visualization: Counts")
-                    fig, ax = plt.subplots()
-                    contingency_table.plot(kind='bar', stacked=True, ax=ax, color=['skyblue', 'orange'], figsize=(8, 5))
-                    ax.set_title(f"Counts by {row_variable} and {col_variable}")
-                    ax.set_xlabel(row_variable)
-                    ax.set_ylabel("Count")
-                    st.pyplot(fig)
-
-                except Exception as e:
-                    st.error(f"Error during Chi-Square Test: {e}")
 
     except Exception as e:
         st.error(f"Error reading the file: {e}")
